@@ -4,7 +4,6 @@
 var libraryStorage = {};
 
 function librarySystem(libraryName, dependenciesArray, callback) {
-
   if (arguments.length < 1) {
     throw new TypeError('No parameters provided.')
   }
@@ -59,7 +58,6 @@ function librarySystem(libraryName, dependenciesArray, callback) {
     if (libraryStorage[libraryName] === undefined) {
       libraryStorage[libraryName] = libraryName + 'Undefined';
     }
-
     return libraryStorage[libraryName];
   }
 }
@@ -74,7 +72,6 @@ tests({
     librarySystem('workBlurb', ['name'], function(name) {
       eq(name, 'Gordon');
     });
-    libraryStorage = {};
   },
   'If callback, it should save the dependency return values to libraryStorage.': function() {
     librarySystem('name', [], function() {
@@ -84,7 +81,6 @@ tests({
     librarySystem('workBlurb', ['name'], function(name) {
       eq(libraryStorage.name, 'Gordon');
     });
-    libraryStorage = {};
   },
   'If callback, it should accept any number of dependencies.': function() {
     librarySystem('name', [], function() {
@@ -100,7 +96,6 @@ tests({
 
     var results = librarySystem('workBlurb');
     eq(results, 'Gordon works at Watch and Code');
-    libraryStorage = {};
   },
   'If callback, it should only run each callback once.': function() {
     var numberOfTimesCallbackHasRun = 0;
@@ -121,7 +116,6 @@ tests({
     librarySystem('workBlurb');
     librarySystem('workBlurb');
     eq(numberOfTimesCallbackHasRun, 1);
-    libraryStorage = {};
   },
   'If no callback, it should return the value for the libraryName provided.': function() {
     librarySystem('name', [], function() {
@@ -129,7 +123,6 @@ tests({
     });
     var result = librarySystem('name');
     eq(result, 'Gordon');
-    libraryStorage = {};
   },
   'It should be able to run the libraries out of order.': function() {
     librarySystem('workBlurb', ['name', 'company'], function(name, company) {
@@ -146,7 +139,6 @@ tests({
     var result = librarySystem('workBlurb');
 
     eq(result, 'Gordon works at Watch and Code');
-    libraryStorage = {};
   },
   'It should be able to run the libraries out of order (workBlurb in middle).': function() {
     librarySystem('name', [], function() {
@@ -164,7 +156,6 @@ tests({
     var result = librarySystem('workBlurb');
 
     eq(result, 'Gordon works at Watch and Code');
-    libraryStorage = {};
   },
   'It should be able to run the dependency library calls in a different order from the array order.': function() {
     librarySystem('workBlurb', ['name', 'company'], function(name, company) {
@@ -182,7 +173,6 @@ tests({
     var result = librarySystem('workBlurb');
 
     eq(result, 'Gordon works at Watch and Code');
-    libraryStorage = {};
   },
   'If nothing is provided to librarySystem, it should throw a TypeError.': function() {
     try {
