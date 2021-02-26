@@ -20,7 +20,7 @@ function librarySystem(libraryName, dependenciesArray, callback) {
         dependencyValueArray.push(librarySystem(dependencyName));
         // This conditional sets up the undefined storage array and the values inside of it for reference.
         if (dependencyValueArray[i] === dependenciesArray[i] + 'Undefined') {
-          if (!libraryStorage.undefinedStorage) {
+          if (Boolean(libraryStorage.undefinedStorage) === false) {
             libraryStorage.undefinedStorage = [];
           }
           libraryStorage.undefinedStorage.push([dependencyName]);
