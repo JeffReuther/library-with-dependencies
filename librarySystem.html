@@ -1,0 +1,197 @@
+<script src="../tinytest.js"></script>
+<script>
+
+var libraryStorage = {};
+
+function librarySystem(libraryName, dependenciesArray, callback) {
+
+  if (arguments.length < 1) {
+    throw new TypeError('No parameters provided.')
+  }
+  // If the function is to "set" the library to storage.
+  if (arguments.length > 1) {
+    var dependLength = dependenciesArray.length;
+    var dependencyValueArray = [];
+    var undefinedStorageIndex = 0;
+    // If there are dependencies.
+    if (dependLength >= 1) {
+      for (var i = 0; i < dependLength; i++) {
+        // For each item in the dependencies array, set the corresponding name value to its returned stored value.
+        var dependencyName = dependenciesArray[i];
+        dependencyValueArray.push(librarySystem(dependencyName));
+        // This conditional sets up the undefined storage array and the values inside of it for reference.
+        if (dependencyValueArray[i] === dependenciesArray[i] + 'Undefined') {
+          if (!libraryStorage.undefinedStorage) {
+            libraryStorage.undefinedStorage = [];
+          }
+          libraryStorage.undefinedStorage.push([dependencyName]);
+          libraryStorage.undefinedStorage[undefinedStorageIndex].push(libraryName);
+          // The undefinedStorageIndex keeps the storage updated at its own index dependent on the conditional, not the for loop.
+          undefinedStorageIndex++;
+        }
+      }
+      // For each returned value, call the function with each as supplied parameters.
+      libraryStorage[libraryName] = callback.apply(null, dependencyValueArray);
+    // If there are no dependencies, call the function with no added parameters.
+    } else {
+      libraryStorage[libraryName] = callback();
+      // This for loop checks each value in undefinedStorage and replaces those values with the appropriate replacement.
+      if (libraryStorage.undefinedStorage) {
+        for (var i = 0; i < libraryStorage.undefinedStorage.length; i++) {
+          if (libraryName === libraryStorage.undefinedStorage[i][0]) {
+            var undefinedNameValue = libraryName + 'Undefined';
+            var newRegExForUndefined = new RegExp(undefinedNameValue);
+            var replacedValue = libraryStorage[libraryStorage.undefinedStorage[i][1]].replace(newRegExForUndefined, libraryStorage[libraryName]);
+            libraryStorage[libraryStorage.undefinedStorage[i][1]] = replacedValue;
+            // The value is then removed from the undefinedStorage array, and, if the array is empty, the array is deleted.
+            libraryStorage.undefinedStorage.splice(i, 1);
+            if (libraryStorage.undefinedStorage.length === 0) {
+              delete libraryStorage.undefinedStorage;
+              break;
+            }
+          }
+        }
+      }
+    }
+  // Otherwise, the function "gets" the stored value.
+  } else {
+    // This sets up the dependency libraryName combination that runs its reference into undefinedStorage above.
+    if (libraryStorage[libraryName] === undefined) {
+      libraryStorage[libraryName] = libraryName + 'Undefined';
+    }
+
+    return libraryStorage[libraryName];
+  }
+}
+
+
+tests({
+  'If callback, it should set the dependency return values as the parameters to the callback.': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('workBlurb', ['name'], function(name) {
+      eq(name, 'Gordon');
+    });
+    libraryStorage = {};
+  },
+  'If callback, it should save the dependency return values to libraryStorage.': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('workBlurb', ['name'], function(name) {
+      eq(libraryStorage.name, 'Gordon');
+    });
+    libraryStorage = {};
+  },
+  'If callback, it should accept any number of dependencies.': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      return name + ' works at ' + company;
+    });
+
+    var results = librarySystem('workBlurb');
+    eq(results, 'Gordon works at Watch and Code');
+    libraryStorage = {};
+  },
+  'If callback, it should only run each callback once.': function() {
+    var numberOfTimesCallbackHasRun = 0;
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      numberOfTimesCallbackHasRun++;
+      return name + ' works at ' + company;
+    });
+
+    librarySystem('workBlurb');
+    librarySystem('workBlurb');
+    librarySystem('workBlurb');
+    eq(numberOfTimesCallbackHasRun, 1);
+    libraryStorage = {};
+  },
+  'If no callback, it should return the value for the libraryName provided.': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+    var result = librarySystem('name');
+    eq(result, 'Gordon');
+    libraryStorage = {};
+  },
+  'It should be able to run the libraries out of order.': function() {
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      return name + ' works at ' + company;
+    });
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+
+    var result = librarySystem('workBlurb');
+
+    eq(result, 'Gordon works at Watch and Code');
+    libraryStorage = {};
+  },
+  'It should be able to run the libraries out of order (workBlurb in middle).': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      return name + ' works at ' + company;
+    });
+
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+
+    var result = librarySystem('workBlurb');
+
+    eq(result, 'Gordon works at Watch and Code');
+    libraryStorage = {};
+  },
+  'It should be able to run the dependency library calls in a different order from the array order.': function() {
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      return name + ' works at ' + company;
+    });
+
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+    
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+
+    var result = librarySystem('workBlurb');
+
+    eq(result, 'Gordon works at Watch and Code');
+    libraryStorage = {};
+  },
+  'If nothing is provided to librarySystem, it should throw a TypeError.': function() {
+    try {
+      librarySystem();
+    } catch(e) {
+      var isTypeError = (e instanceof TypeError);
+    }
+      eq(isTypeError, true);
+  }
+})
+
+</script>
